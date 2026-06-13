@@ -75,74 +75,117 @@ export default function App() {
     }
   }, [appState]);
 
+  const toggleStep = (mealIndex, stepIndex) => {
+    const key = `${mealIndex}-${stepIndex}`;
+    setCheckedSteps(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const toggleGrocery = (catIndex, itemIndex) => {
+    const key = `${catIndex}-${itemIndex}`;
+    setCheckedGroceries(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const CUISINE_MEALS = {
+    Indian:        { b: 'Masala Poha & Chai',        l: 'Paneer Tikka Bowl',        d: 'Dal Makhani & Naan' },
+    Continental:   { b: 'Avocado Toast & Eggs',      l: 'Grilled Chicken Caesar',   d: 'Herb Butter Salmon' },
+    Asian:         { b: 'Congee with Toppings',      l: 'Thai Basil Fried Rice',    d: 'Teriyaki Noodle Bowl' },
+    Mediterranean: { b: 'Greek Yogurt Parfait',      l: 'Falafel Wrap & Hummus',    d: 'Baked Lemon Herb Fish' },
+    Mexican:       { b: 'Huevos Rancheros',          l: 'Chicken Burrito Bowl',     d: 'Tacos al Pastor' },
+  };
+
+  const buildPlan = (cuisine, diet, time, budget) => {
+    const meals = CUISINE_MEALS[cuisine] || CUISINE_MEALS.Indian;
+    const isQuick = time.includes('Quick');
+    const isElab  = time.includes('Elaborate');
+    const budgetNum = Number(budget);
+    return {
+      meals: [
+        {
+          type: 'Breakfast', name: meals.b,
+          prepTime: isQuick ? '10 mins' : '20 mins', calories: '350 kcal', difficulty: 'Easy',
+          steps: [
+            { category: 'Prep', instruction: 'Gather all ingredients and wash vegetables/grains thoroughly.' },
+            { category: 'Prep', instruction: 'Measure and set aside spices, sauces, and garnishes needed.' },
+            { category: 'Cook', instruction: 'Heat oil/pan and cook the main components over medium heat until done.' },
+            { category: 'Cook', instruction: 'Season to taste and adjust flavors as needed.' },
+            { category: 'Plate', instruction: 'Plate neatly, add garnishes, and serve hot with a beverage.' },
+          ]
+        },
+        {
+          type: 'Lunch', name: meals.l,
+          prepTime: isQuick ? '15 mins' : '35 mins', calories: '550 kcal', difficulty: 'Medium',
+          steps: [
+            { category: 'Prep', instruction: 'Chop all vegetables into even pieces and prepare the dressing or sauce.' },
+            { category: 'Prep', instruction: 'Marinate proteins for at least 10 minutes if applicable.' },
+            { category: 'Cook', instruction: 'Sauté or grill proteins until fully cooked and golden.' },
+            { category: 'Cook', instruction: 'Combine all components and toss with dressing or sauce.' },
+            { category: 'Plate', instruction: 'Arrange beautifully in a bowl or plate and serve fresh.' },
+          ]
+        },
+        {
+          type: 'Dinner', name: meals.d,
+          prepTime: isQuick ? '25 mins' : isElab ? '75 mins' : '55 mins',
+          calories: '650 kcal', difficulty: isElab ? 'Hard' : 'Medium',
+          steps: [
+            { category: 'Prep', instruction: 'Soak, marinate, or pre-cook any ingredients that need advance prep.' },
+            { category: 'Prep', instruction: 'Prep side dishes, rice, or bread to accompany the main course.' },
+            { category: 'Cook', instruction: 'Cook the main dish slowly to develop deep, rich flavors.' },
+            { category: 'Cook', instruction: 'Taste and adjust seasoning; let simmer until perfectly cooked.' },
+            { category: 'Plate', instruction: 'Plate elegantly with garnishes and serve with accompaniments.' },
+          ]
+        },
+      ],
+      groceryList: [
+        { category: 'Vegetables', items: ['Onions', 'Tomatoes', 'Cilantro', 'Bell Peppers', 'Garlic', 'Ginger'] },
+        { category: 'Proteins',   items: diet === 'Vegan' ? ['Tofu', 'Chickpeas', 'Lentils'] : diet === 'Vegetarian' ? ['Paneer', 'Eggs', 'Lentils'] : ['Paneer / Chicken', 'Eggs'] },
+        { category: 'Dairy',      items: diet === 'Vegan' ? ['Coconut Milk', 'Oat Milk'] : ['Yogurt', 'Butter', 'Cream'] },
+        { category: 'Pantry',     items: ['Olive Oil', 'Salt', 'Sugar', 'Rice / Naan', 'Cumin', 'Turmeric'] },
+        { category: 'Spices',     items: ['Coriander', 'Garam Masala', 'Red Chilli', 'Pepper', 'Bay Leaves'] },
+      ],
+      substitutions: [
+        { original: 'Paneer / Chicken', alternatives: ['Tofu (vegan)', 'Chickpeas (budget)', 'Mushrooms (vegetarian)'] },
+        { original: 'Rice / Naan',      alternatives: ['Quinoa (healthy)', 'Cauliflower Rice (keto)', 'Roti (lighter)'] },
+        { original: 'Butter / Cream',   alternatives: ['Coconut Oil (vegan)', 'Greek Yogurt (light)', 'Cashew Cream (dairy-free)'] },
+      ],
+      budgetAnalysis: {
+        costPerMeal: { Breakfast: '₹150', Lunch: '₹250', Dinner: '₹350' },
+        totalCost: '₹750',
+        status: budgetNum < 750 ? '❌ Over budget' : budgetNum < 900 ? '⚠️ Slightly over' : '✅ Within budget',
+        suggestion: budgetNum < 750
+          ? 'Buy seasonal vegetables and skip dairy to cut costs significantly.'
+          : 'Great budget! You have room for premium ingredients.'
+      }
+    };
+  };
+
   const handleGenerate = () => {
     setErrorMsg('');
     setAppState('loading');
-
     setTimeout(() => {
-      // Generate a mock response tailored to the inputs
-      const mockPlan = {
-        meals: [
-          {
-            type: "Breakfast",
-            name: cuisineMood === 'Indian' ? "Masala Poha & Chai" : "Avocado Toast & Eggs",
-            prepTime: timePerMeal.includes('Quick') ? "10 mins" : "20 mins",
-            calories: "350 kcal",
-            difficulty: "Easy",
-            steps: [
-              {category: "Prep", instruction: "Wash and prep the ingredients."},
-              {category: "Cook", instruction: "Cook the main components over medium heat."},
-              {category: "Plate", instruction: "Serve hot and garnish well."}
-            ]
-          },
-          {
-            type: "Lunch",
-            name: cuisineMood === 'Indian' ? "Paneer Tikka Bowl" : "Quinoa Salad Bowl",
-            prepTime: timePerMeal.includes('Quick') ? "15 mins" : "35 mins",
-            calories: "550 kcal",
-            difficulty: "Medium",
-            steps: [
-              {category: "Prep", instruction: "Chop all vegetables and prepare the dressing."},
-              {category: "Cook", instruction: "Sauté the proteins and mix with the base."},
-              {category: "Plate", instruction: "Arrange beautifully in a bowl."}
-            ]
-          },
-          {
-            type: "Dinner",
-            name: cuisineMood === 'Indian' ? "Dal Makhani & Naan" : "Herb Roasted Chicken",
-            prepTime: timePerMeal.includes('Quick') ? "25 mins" : "60 mins",
-            calories: "650 kcal",
-            difficulty: timePerMeal.includes('Elaborate') ? "Hard" : "Medium",
-            steps: [
-              {category: "Prep", instruction: "Marinate or soak ingredients as needed."},
-              {category: "Cook", instruction: "Simmer slowly to develop flavors."},
-              {category: "Plate", instruction: "Plate elegantly with a side of herbs."}
-            ]
-          }
-        ],
-        groceryList: [
-          {category: "Vegetables", items: ["Onions", "Tomatoes", "Cilantro", "Bell Peppers"]},
-          {category: "Proteins", items: [dietaryPrefs === 'Vegan' ? "Tofu" : "Paneer/Chicken"]},
-          {category: "Pantry", items: ["Olive Oil", "Salt", "Spices", "Rice"]}
-        ],
-        substitutions: [
-          {original: "Paneer/Chicken", alternatives: ["Tofu", "Chickpeas"]},
-          {original: "Rice", alternatives: ["Quinoa", "Cauliflower Rice"]}
-        ],
-        budgetAnalysis: {
-          costPerMeal: {Breakfast: "₹150", Lunch: "₹250", Dinner: "₹350"},
-          totalCost: "₹750",
-          status: dailyBudget < 750 ? "❌ Over budget" : "✅ Within budget",
-          suggestion: dailyBudget < 750 ? "Consider buying seasonal veggies to save costs." : "Great budget for a premium meal!"
-        }
-      };
-
-      setPlanData(mockPlan);
+      setPlanData(buildPlan(cuisineMood, dietaryPrefs, timePerMeal, dailyBudget));
       setAppState('results');
       setCheckedSteps({});
       setCheckedGroceries({});
       setExpandedMeal('Breakfast');
-    }, 4500); // 4.5s simulation
+    }, 3000);
+  };
+
+  const handleSurpriseMe = () => {
+    const cuisines = ['Indian', 'Continental', 'Asian', 'Mediterranean', 'Mexican'];
+    const diets    = ['None', 'Vegetarian', 'Vegan', 'Gluten-Free'];
+    const times    = ['Quick (<30m)', 'Moderate (30m-1h)', 'Elaborate (1h+)'];
+    const rc = cuisines[Math.floor(Math.random() * cuisines.length)];
+    const rd = diets[Math.floor(Math.random() * diets.length)];
+    const rt = times[Math.floor(Math.random() * times.length)];
+    setCuisineMood(rc); setDietaryPrefs(rd); setTimePerMeal(rt);
+    setAppState('loading');
+    setTimeout(() => {
+      setPlanData(buildPlan(rc, rd, rt, dailyBudget));
+      setAppState('results');
+      setCheckedSteps({});
+      setCheckedGroceries({});
+      setExpandedMeal('Breakfast');
+    }, 3000);
   };
 
   const getMealProgress = (mealIndex, meal) => {
@@ -240,12 +283,21 @@ export default function App() {
           </div>
         </div>
 
-        <button 
-          onClick={handleGenerate}
-          className="w-full mt-8 bg-brand-grayDark text-white p-4 rounded-xl font-medium text-lg flex items-center justify-center gap-3 hover:bg-black transition-all hover:scale-[1.02] active:scale-95 shadow-xl"
-        >
-          <Sparkles size={20} /> Generate My Menu
-        </button>
+        <div className="flex gap-3 mt-8">
+          <button 
+            onClick={handleGenerate}
+            className="flex-1 bg-brand-grayDark text-white p-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2 hover:bg-black transition-all hover:scale-[1.02] active:scale-95 shadow-xl"
+          >
+            <Sparkles size={20} /> Generate My Menu
+          </button>
+          <button
+            onClick={handleSurpriseMe}
+            title="Surprise Me!"
+            className="px-5 bg-brand-blue/60 text-brand-grayDark rounded-xl font-medium text-lg flex items-center justify-center gap-2 hover:bg-brand-blue transition-all hover:scale-[1.02] active:scale-95 shadow-xl border border-brand-blue"
+          >
+            🎲
+          </button>
+        </div>
       </div>
     </motion.div>
   );
