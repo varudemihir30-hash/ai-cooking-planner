@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChefHat, Clock, Users, IndianRupee, Sparkles, CheckCircle2, ChevronDown, ListPlus, Copy, Download, AlertCircle, ArrowRight, Salad, FireExtinguisher, Flame, ChevronUp } from 'lucide-react';
+import { ChefHat, Clock, Users, IndianRupee, Sparkles, CheckCircle2, ChevronDown, ListPlus, Copy, Download, AlertCircle, ArrowRight, Salad, Flame, ChevronUp } from 'lucide-react';
 
 const UNSPLASH_IMAGES = {
   Breakfast: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?q=80&w=2940&auto=format&fit=crop",
