@@ -41,7 +41,6 @@ Must provide exactly 3 meals: Breakfast, Lunch, Dinner in that order.`;
 
 export default function App() {
   const [appState, setAppState] = useState('onboarding'); // onboarding, loading, results
-  const [apiKey, setApiKey] = useState('');
   
   // Form State
   const [peopleCount, setPeopleCount] = useState(2);
@@ -76,57 +75,74 @@ export default function App() {
     }
   }, [appState]);
 
-  const handleGenerate = async () => {
-    if (!apiKey) {
-      setErrorMsg("Please enter your Anthropic API Key to proceed.");
-      return;
-    }
+  const handleGenerate = () => {
     setErrorMsg('');
     setAppState('loading');
 
-    const prompt = `Please create a daily meal plan (Breakfast, Lunch, Dinner) for ${peopleCount} people.
-    Dietary Preferences: ${dietaryPrefs}
-    Time Available Per Meal: ${timePerMeal}
-    Daily Budget: ₹${dailyBudget}
-    Cuisine Mood: ${cuisineMood}
-    Remember to follow the exact JSON structure requested.`;
+    setTimeout(() => {
+      // Generate a mock response tailored to the inputs
+      const mockPlan = {
+        meals: [
+          {
+            type: "Breakfast",
+            name: cuisineMood === 'Indian' ? "Masala Poha & Chai" : "Avocado Toast & Eggs",
+            prepTime: timePerMeal.includes('Quick') ? "10 mins" : "20 mins",
+            calories: "350 kcal",
+            difficulty: "Easy",
+            steps: [
+              {category: "Prep", instruction: "Wash and prep the ingredients."},
+              {category: "Cook", instruction: "Cook the main components over medium heat."},
+              {category: "Plate", instruction: "Serve hot and garnish well."}
+            ]
+          },
+          {
+            type: "Lunch",
+            name: cuisineMood === 'Indian' ? "Paneer Tikka Bowl" : "Quinoa Salad Bowl",
+            prepTime: timePerMeal.includes('Quick') ? "15 mins" : "35 mins",
+            calories: "550 kcal",
+            difficulty: "Medium",
+            steps: [
+              {category: "Prep", instruction: "Chop all vegetables and prepare the dressing."},
+              {category: "Cook", instruction: "Sauté the proteins and mix with the base."},
+              {category: "Plate", instruction: "Arrange beautifully in a bowl."}
+            ]
+          },
+          {
+            type: "Dinner",
+            name: cuisineMood === 'Indian' ? "Dal Makhani & Naan" : "Herb Roasted Chicken",
+            prepTime: timePerMeal.includes('Quick') ? "25 mins" : "60 mins",
+            calories: "650 kcal",
+            difficulty: timePerMeal.includes('Elaborate') ? "Hard" : "Medium",
+            steps: [
+              {category: "Prep", instruction: "Marinate or soak ingredients as needed."},
+              {category: "Cook", instruction: "Simmer slowly to develop flavors."},
+              {category: "Plate", instruction: "Plate elegantly with a side of herbs."}
+            ]
+          }
+        ],
+        groceryList: [
+          {category: "Vegetables", items: ["Onions", "Tomatoes", "Cilantro", "Bell Peppers"]},
+          {category: "Proteins", items: [dietaryPrefs === 'Vegan' ? "Tofu" : "Paneer/Chicken"]},
+          {category: "Pantry", items: ["Olive Oil", "Salt", "Spices", "Rice"]}
+        ],
+        substitutions: [
+          {original: "Paneer/Chicken", alternatives: ["Tofu", "Chickpeas"]},
+          {original: "Rice", alternatives: ["Quinoa", "Cauliflower Rice"]}
+        ],
+        budgetAnalysis: {
+          costPerMeal: {Breakfast: "₹150", Lunch: "₹250", Dinner: "₹350"},
+          totalCost: "₹750",
+          status: dailyBudget < 750 ? "❌ Over budget" : "✅ Within budget",
+          suggestion: dailyBudget < 750 ? "Consider buying seasonal veggies to save costs." : "Great budget for a premium meal!"
+        }
+      };
 
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20240620',
-          max_tokens: 3000,
-          system: SYSTEM_PROMPT,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error?.message || "Failed to generate plan");
-      }
-
-      const data = await response.json();
-      const content = data.content[0].text.trim();
-      const jsonStr = content.substring(content.indexOf('{'), content.lastIndexOf('}') + 1);
-      const parsedData = JSON.parse(jsonStr);
-      setPlanData(parsedData);
+      setPlanData(mockPlan);
       setAppState('results');
       setCheckedSteps({});
       setCheckedGroceries({});
       setExpandedMeal('Breakfast');
-    } catch (error) {
-      console.error(error);
-      setErrorMsg(error.message || "An error occurred while generating the plan.");
-      setAppState('onboarding');
-    }
+    }, 4500); // 4.5s simulation
   };
 
   const getMealProgress = (mealIndex, meal) => {
@@ -165,17 +181,6 @@ export default function App() {
       )}
 
       <div className="space-y-6">
-        <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center gap-2"><ChefHat size={16} /> Anthropic API Key</label>
-          <input 
-            type="password" 
-            value={apiKey} 
-            onChange={(e) => setApiKey(e.target.value)} 
-            placeholder="sk-ant-..." 
-            className="w-full p-4 rounded-xl glass-input"
-          />
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-2"><Users size={16} /> People</label>
